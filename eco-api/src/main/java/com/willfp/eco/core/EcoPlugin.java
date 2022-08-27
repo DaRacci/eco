@@ -1,5 +1,6 @@
 package com.willfp.eco.core;
 
+import com.google.common.graph.MutableGraph;
 import com.willfp.eco.core.command.impl.PluginCommand;
 import com.willfp.eco.core.config.base.ConfigYml;
 import com.willfp.eco.core.config.base.LangYml;
@@ -24,6 +25,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +54,7 @@ import java.util.stream.Collectors;
  * <b>IMPORTANT: When reloading a plugin, all runnables / tasks will
  * be cancelled.</b>
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused"})
 public abstract class EcoPlugin extends JavaPlugin implements PluginLike {
     /**
      * The polymart resource ID of the plugin.
@@ -282,6 +284,7 @@ public abstract class EcoPlugin extends JavaPlugin implements PluginLike {
      *
      * @param pluginProps The props. If left null, it will read from eco.yml.
      */
+    @SuppressWarnings({"UnstableApiUsage"})
     protected EcoPlugin(@Nullable final PluginProps pluginProps) {
         /*
         Eco must be initialized before any plugin's constructors
@@ -304,6 +307,18 @@ public abstract class EcoPlugin extends JavaPlugin implements PluginLike {
         method that only exists in EcoSpigotPlugin - but that feels filthy,
         and I'd rather only use reflection where necessary.
         */
+        final MutableGraph<String> dependencyGraph;
+        try {
+            final var field = SimplePluginManager.class.getDeclaredField("dependencyGraph");
+            field.setAccessible(true);
+            dependencyGraph = (MutableGraph<String>) field.get(Bukkit.getPluginManager());
+            field.setAccessible(false);
+        } catch (NoSuchFieldException | IllegalAccessException | ClassCastException e) {
+            /* This shouldn't happen.  */
+            throw new RuntimeException(e);
+        }
+
+        dependencyGraph.putEdge(this.getDescription().getName(), "Minix");
 
         if (Eco.get() == null && this instanceof Eco) {
             /*

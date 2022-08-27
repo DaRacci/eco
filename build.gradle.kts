@@ -167,6 +167,11 @@ allprojects {
             Kotlin and caffeine are not shaded so that they can be accessed directly by eco plugins.
             Also, not relocating adventure, because it's a pain in the ass, and it doesn't *seem* to be causing loader constraint violations.
              */
+            dependencyFilter.exclude {
+                it.moduleGroup == "org.jetbrains.kotlin" ||
+                    it.moduleGroup == "org.jetbrains.kotlinx" ||
+                    it.moduleGroup == "org.jetbrains.exposed"
+            }
         }
 
         compileJava {
